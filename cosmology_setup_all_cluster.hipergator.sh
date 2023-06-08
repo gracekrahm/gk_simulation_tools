@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 
 #Powderday cluster setup convenience script for SLURM queue mananger
 #on HiPerGator at the University of FLorida.  This sets up the model
@@ -11,7 +11,7 @@
 #assumed that you will *very carefully* set this up yourself.
 
 #2. This requires bash versions >= 3.0.  To check, type at the shell
-#prompt: 
+#prompt:
 
 #> echo $BASH_VERSION
 
@@ -29,7 +29,7 @@ zpos=${11}
 galaxy=${12}
 snap=${13}
 tcmb=${14}
-
+ngal=${15}
 echo "processing model file for galaxy,snapshot:  $galaxy,$snap"
 
 
@@ -40,9 +40,14 @@ rm -f *.pyc
 echo "setting up the output directory in case it doesnt already exist"
 echo "snap is: $snap"
 echo "model dir is: $model_dir"
+#echo "model dir is: $model_dir+'params/'"
+echo "ngalaxies is: $ngal"
+
 mkdir $model_dir
+mkdir $model_dir_remote
 
 filem="$model_dir/snap${snap}_galaxy${galaxy}.py"
+echo filem
 echo "writing to $filem"
 rm -f $filem
 
@@ -79,9 +84,12 @@ then
     echo "snapshot_name = 'snapshot_'+snapnum_str+'.0.hdf5'" >>$filem
 elif [ $FILTERFLAG -eq 1 ]
 then
-    echo "hydro_dir = '$hydro_dir_remote/snap'+snapnum_str+'/'">>$filem
+    #the one i'm actually using
+    #echo "hydro_dir = '$hydro_dir_remote/snap'+snapnum_str+'/'">>$filem
+    echo "hydro_dir = '$hydro_dir_remote'">>$filem
     #echo "snapshot_name = 'snap'+snapnum_str+'_galaxy'+galaxy_num_str+'_filtered.hdf5'">>$filem
-    echo "snapshot_name = 'galaxy_'+str(galaxy_num)+'.hdf5'">>$filem
+    #echo "snapshot_name = 'galaxy_'+str(galaxy_num)+'.hdf5'">>$filem
+    echo "snapshot_name = 'snap'+snapnum_str + 'galaxy_' + str(galaxy_num)+'.hdf5'">>$filem
 
 else
     echo "hydro_dir = '$hydro_dir_remote/'">>$filem
@@ -92,7 +100,7 @@ fi
 echo -e "\n" >>$filem
 
 echo "#where the files should go" >>$filem
-echo "PD_output_dir = '${model_dir_remote}/' ">>$filem
+echo "PD_output_dir = '${model_dir_remote}' ">>$filem
 echo "Auto_TF_file = 'snap'+snapnum_str+'.logical' ">>$filem
 echo "Auto_dustdens_file = 'snap'+snapnum_str+'.dustdens' ">>$filem
 
@@ -124,29 +132,29 @@ echo $qsubfile
 
 echo "#! /bin/bash" >>$qsubfile
 echo "#SBATCH --job-name=${model_run_name}.snap${snap}" >>$qsubfile
-echo "#SBATCH --output=pd.master.snap${snap}.o" >>$qsubfile
-echo "#SBATCH --error=pd.master.snap${snap}.e" >>$qsubfile
 echo "#SBATCH --mail-type=ALL" >>$qsubfile
-echo "#SBATCH --mail-user=desika.narayanan@gmail.com" >>$qsubfile
+echo "#SBATCH --mail-user=krahm581@agnesscott.edu" >>$qsubfile
 echo "#SBATCH --time=48:00:00" >>$qsubfile
 echo "#SBATCH --tasks-per-node=32">>$qsubfile
 echo "#SBATCH --nodes=$n_nodes">>$qsubfile
 echo "#SBATCH --mem-per-cpu=3800">>$qsubfile
 echo "#SBATCH --account=narayanan">>$qsubfile
 echo "#SBATCH --qos=narayanan-b">>$qsubfile
+#echo "#SBATCH --array=0-${NGALAXIES_MAX}">>$qsubfile
+echo "#SBATCH --array=0-${ngal}" >>$qsubfile
+
 echo -e "\n">>$qsubfile
 echo -e "\n" >>$qsubfile
 
 echo "module purge">>$qsubfile
-echo "module load git/1.9.0">>$qsubfile
-echo "module load gsl/1.16">>$qsubfile
-echo "module load gcc/5.2.0">>$qsubfile
+echo "module load git">>$qsubfile
+echo "module load intel/2018.1.163">>$qsubfile
 echo "module load hdf5/1.8.16">>$qsubfile
-echo "module load openmpi/1.10.2">>$qsubfile
+echo "module load openmpi/4.0.3">>$qsubfile
 echo -e "\n">>$qsubfile
 
-echo "cd /home/desika.narayanan/pd/">>$qsubfile
-echo "python pd_front_end.py $model_dir_remote parameters_master snap${snap}_galaxy\$SLURM_ARRAY_TASK_ID  > $model_dir_remote/snap${snap}_galaxy\$SLURM_ARRAY_TASK_ID.LOG">>$qsubfile
+echo "cd /home/gkrahm/powderday/">>$qsubfile
+echo "python pd_front_end.py $model_dir parameters_master snap${snap}_galaxy\$SLURM_ARRAY_TASK_ID">>$qsubfile
 
 
 #done
