@@ -70,5 +70,6 @@ echo -e "\n">>$qsubfile
 
 #echo "python pd_front_end.py $model_dir parameters_master snap${snap}_galaxy\$SLURM_ARRAY_TASK_ID">>$qsubfile
 echo "python run_prosp.py \$SLURM_ARRAY_TASK_ID ${model_dir_remote}snap${snapnum_str_prefix}${snap}.galaxy\${SLURM_ARRAY_TASK_ID}.rtout $sed_fits_dir">>$qsubfile
+echo "python get_prosp_quantities.py \$SLURM_ARRAY_TASK_ID $model_dir_remote">>$qsubfile
 
 #done
