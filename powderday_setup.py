@@ -6,23 +6,22 @@
 import numpy as np
 from subprocess import call
 import sys
+import pandas as pd
 
 nnodes=1
 
 
 #################
 # Edit these !!!
-snap_redshift = float(2.0)
-snap_num = 33
-npzfile = '/orange/narayanan/s.lower/TNG/position_npzs/tng_snap33_pos.npz' 
-model_dir_base = '/orange/narayanan/s.lower/TNG/pd_runs/'
-hydro_dir = '/orange/narayanan/s.lower/TNG/filtered_snapshots/'
+snap_redshift = float(7.490)
+snap_num = 59
+npzfile = '/blue/narayanan/gkrahm/gizmo_runs/snap059/filtered_snaps/galaxy_positions.npz'
+model_dir_base = '/blue/narayanan/gkrahm/gizmo_runs/snap059/pd_runs/' # where do you want your POWDERDAY parameters model files to go?
+hydro_dir =  '/blue/narayanan/gkrahm/gizmo_runs/snap059/filtered_snaps/' # where are your filtered galaxies?
 hydro_dir_remote = hydro_dir
-model_run_name='TNG_m100'
+model_run_name=model_run_name='simba_m25n512' # shorthand for what you are running
+ngal_max = 10 #max galaxy number to make files for if different than ngalaxies
 #################
-
-
-
 
 
 
@@ -43,27 +42,28 @@ data = np.load(npzfile,allow_pickle=True)
 pos = data['pos'][()] #positions dictionary
 #ngalaxies is the dict that says how many galaxies each snapshot has, in case it's less than NGALAXIES_MAX
 ngalaxies = data['ngalaxies'][()]
+print(ngalaxies)
+
 
 
 
 
 for snap in [snap_num]:
-    
-    model_dir = model_dir_base+'/snap{:03d}'.format(snap)
-    model_dir_remote = model_dir
-    
+
+    model_dir = model_dir_base+'params/'
+    model_dir_remote = model_dir_base+'seds/'
+
     tcmb = 2.73*(1.+snap_redshift)
 
     NGALAXIES = ngalaxies['snap'+str(snap)]
-    for nh in range(NGALAXIES):
-        try:
-            xpos = pos['galaxy'+str(nh)]['snap'+str(snap)][0]
-        except: continue
-        
+    print('ngalaxies', NGALAXIES)
+    #for nh in range(NGALAXIES):
+    ngal_max = 10
+    for nh in range(ngal_max):
+        xpos = pos['galaxy'+str(nh)]['snap'+str(snap)][0]
         ypos = pos['galaxy'+str(nh)]['snap'+str(snap)][1]
         zpos = pos['galaxy'+str(nh)]['snap'+str(snap)][2]
-        
-        cmd = "./cosmology_setup_all_cluster.hipergator.sh "+str(nnodes)+' '+model_dir+' '+hydro_dir+' '+model_run_name+' '+str(COSMOFLAG)+' '+str(FILTERFLAG)+' '+model_dir_remote+' '+hydro_dir_remote+' '+str(xpos)+' '+str(ypos)+' '+str(zpos)+' '+str(nh)+' '+str(snap)+' '+str(tcmb)
+        print('calling')
+        cmd = "./cosmology_setup_all_cluster.hipergator.sh "+str(nnodes)+' '+model_dir+' '+hydro_dir+' '+model_run_name+' '+str(COSMOFLAG)+' '+str(FILTERFLAG)+' '+model_dir_remote+' '+hydro_dir_remote+' '+str(xpos)+' '+str(ypos)+' '+str(zpos)+' '+str(nh)+' '+str(snap)+' '+str(tcmb)+' '+str(ngal_max)
         call(cmd,shell=True)
-
-        
+        print('called')
