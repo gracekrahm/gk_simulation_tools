@@ -69,12 +69,8 @@ echo -e "galaxy_num_str = str(galaxy_num)" >> $filem
 
 echo -e "\n" >>$filem
 
-echo "if snapshot_num < 10:" >> $filem
-echo -e "\t snapnum_str = '00'+str(snapshot_num)" >> $filem
-echo -e "elif snapshot_num >= 10 and snapshot_num <100:" >> $filem
-echo -e "\t snapnum_str = '0'+str(snapshot_num)" >> $filem
-echo -e "else:" >> $filem
-echo -e "\t snapnum_str = str(snapshot_num)" >> $filem
+
+echo -e "snapnum_str = str(snapshot_num)" >> $filem
 
 echo -e "\n" >>$filem
 
