@@ -4,55 +4,66 @@ import sys, os
 import numpy as np
 import glob
 import tqdm
+import yt
 
 ##############
 # Line arguments
 ###############
 #snap = int(sys.argv[1])
 #snap_dir = sys.argv[2]
-#outfile = snap_dir+'/snap'+str(snap)+'_positions.npz'
+#outfile = snap_dir+'/snap'+str(snap)+'_positions_best.npz'
 #snap = int(sys.argv[1])
-snap = 59
+snap = 64
 snap_dir = './' #where are the filtered galaxies?
-outfile = './galaxy_positions.npz' #where do you want the output to go?
-snaplabel = '059'
+outfile = './galaxy_positions_best.npz' #where do you want the output to go?
+snaplabel = '64'
 ################
 
 pos = {}
 ngalaxies = {}
 
-infiles = sorted(glob.glob(snap_dir+'/snap059galaxy_*.hdf5'))
+
+unit_base = {
+    "UnitLength_in_cm": 3.08568e21,
+    "UnitMass_in_g": 1.989e43,
+    "UnitVelocity_in_cm_per_s": 100000,
+}
+
+bbox_lim = 1e5  # kpc
+
+bbox = [[-bbox_lim, bbox_lim], [-bbox_lim, bbox_lim], [-bbox_lim, bbox_lim]]
+
+
+infiles = sorted(glob.glob(snap_dir+'/galaxy_*.hdf5'))
 count = 0
 for i in tqdm.tqdm(range(len(infiles))):
+#for i in tqdm.tqdm(range(1)):
+
     print('count', count)
-#snap059galaxy_10.hdf5
-    #infile = h5py.File(snap_dir+'/snap'+snaplabel+galaxy_'+str(i)+'.hdf5', 'r')
-    infilename = snap_dir+'snap059galaxy_'+str(i)+'.hdf5'
-    #print(infilename)
-    infile = h5py.File(infilename, 'r')
-    #try:
-        #infile = h5py.File(snap_dir+'/galaxy_'+str(i)+'.hdf5', 'r')
-    #except:
-        #continue
     count += 1
     pos['galaxy'+str(i)] = {}
-
-
-    gas_masses = infile['PartType0']['Masses']
-    gas_coords = infile['PartType0']['Coordinates']
-    star_masses = infile['PartType4']['Masses']
-    star_coords = infile['PartType4']['Coordinates']
-    total_mass = np.sum(gas_masses) + np.sum(star_masses)
-
-    x_pos = (np.sum(gas_masses * gas_coords[:,0]) + np.sum(star_masses * star_coords[:,0])) / total_mass
-    y_pos = (np.sum(gas_masses * gas_coords[:,1]) + np.sum(star_masses * star_coords[:,1])) / total_mass
-    z_pos = (np.sum(gas_masses * gas_coords[:,2]) + np.sum(star_masses * star_coords[:,2])) / total_mass
-    print('xpos',x_pos)
-
+    fname = snap_dir+'/galaxy_'+str(i)+'.hdf5'
+    try:
+        ds = yt.load(fname, unit_base=unit_base, bounding_box=bbox)
+        ds.index
+        ad = ds.all_data()
+    # total_mass returns a list, representing the total gas and dark matter + stellar mass, respectively
+        print([tm.in_units("Msun") for tm in ad.quantities.total_mass()])
+        density = ad["PartType0", "density"]
+        wdens = np.where(density == np.max(density))
+    except:
+        continue
+    coordinates = ad["PartType0", "Coordinates"]
+    center = coordinates[wdens][0]
+    print("center = ", center)
+    x_pos, y_pos, z_pos = center
     pos['galaxy'+str(i)]['snap'+str(snap)] = np.array([x_pos, y_pos, z_pos])
-    #print('pos', pos)
-    infile.close()
+    print('center', center)
+    print('pos', pos['galaxy'+str(i)]['snap'+str(snap)])
+    #gas_mass = np.sum(gas_masses)
+    #print(gas_mass, 'gas mass')
+    #star_mass = np.sum(star_masses)
+    #infile.close()
 ngalaxies['snap'+str(snap)] = count
-
-
 np.savez(outfile, ngalaxies=ngalaxies, pos=pos)
+
