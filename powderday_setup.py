@@ -13,14 +13,16 @@ nnodes=1
 
 #################
 # Edit these !!!
-snap_redshift = float(7.490)
-snap_num = 59
-npzfile = '/blue/narayanan/gkrahm/gizmo_runs/snap059/filtered_snaps/galaxy_positions.npz'
-model_dir_base = '/blue/narayanan/gkrahm/gizmo_runs/snap059/pd_runs/' # where do you want your POWDERDAY parameters model files to go?
-hydro_dir =  '/blue/narayanan/gkrahm/gizmo_runs/snap059/filtered_snaps/' # where are your filtered galaxies?
+snap_redshift = float(6.951)
+snap_num = 64
+npzfile = '/orange/narayanan/gkrahm/caesar_snaps/sidney_filtered_snaps/snap064/galaxy_positions_best.npz'
+hydro_dir = '/orange/narayanan/gkrahm/caesar_snaps/sidney_filtered_snaps/snap064/'
+model_dir_base = '/orange/narayanan/gkrahm/caesar_snaps/sidney_filtered_snaps/pd_runs/snap064/myfilter/neb/'
+
+
+
 hydro_dir_remote = hydro_dir
-model_run_name=model_run_name='simba_m25n512' # shorthand for what you are running
-ngal_max = 10 #max galaxy number to make files for if different than ngalaxies
+model_run_name=model_run_name='pd' # shorthand for what you are running
 #################
 
 
@@ -54,16 +56,26 @@ for snap in [snap_num]:
     model_dir_remote = model_dir_base+'seds/'
 
     tcmb = 2.73*(1.+snap_redshift)
-
-    NGALAXIES = ngalaxies['snap'+str(snap)]
+    try:
+        NGALAXIES = ngalaxies['snap'+str(snap)]
+    except:
+        NGALAXIES = ngalaxies['snap0'+str(snap)]
     print('ngalaxies', NGALAXIES)
-    #for nh in range(NGALAXIES):
-    ngal_max = 10
-    for nh in range(ngal_max):
-        xpos = pos['galaxy'+str(nh)]['snap'+str(snap)][0]
-        ypos = pos['galaxy'+str(nh)]['snap'+str(snap)][1]
-        zpos = pos['galaxy'+str(nh)]['snap'+str(snap)][2]
-        print('calling')
-        cmd = "./cosmology_setup_all_cluster.hipergator.sh "+str(nnodes)+' '+model_dir+' '+hydro_dir+' '+model_run_name+' '+str(COSMOFLAG)+' '+str(FILTERFLAG)+' '+model_dir_remote+' '+hydro_dir_remote+' '+str(xpos)+' '+str(ypos)+' '+str(zpos)+' '+str(nh)+' '+str(snap)+' '+str(tcmb)+' '+str(ngal_max)
-        call(cmd,shell=True)
-        print('called')
+    ngal = NGALAXIES
+    for nh in range(NGALAXIES):
+        print(nh)
+        try:
+            try:
+                center = pos['galaxy'+str(nh)]['snap'+str(snap)]#[0]
+            except:
+                center = pos['galaxy'+str(nh)]['snap0'+str(snap)]#[0]
+            xpos = center[0]
+            ypos = center[1]
+            zpos = center[2]
+            print('center', center)
+            print('calling')
+            cmd = "./cosmology_setup_all_cluster.hipergator.sh "+str(nnodes)+' '+model_dir+' '+hydro_dir+' '+model_run_name+' '+str(COSMOFLAG)+' '+str(FILTERFLAG)+' '+model_dir_remote+' '+hydro_dir_remote+' '+str(xpos)+' '+str(ypos)+' '+str(zpos)+' '+str(nh)+' '+str(snap)+' '+str(tcmb)+' '+str(ngal-1)
+            call(cmd,shell=True)
+            print('called')
+        except:
+            continue
