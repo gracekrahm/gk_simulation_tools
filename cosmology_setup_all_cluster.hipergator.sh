@@ -143,9 +143,10 @@ echo -e "\n" >>$qsubfile
 
 echo "module purge">>$qsubfile
 echo "module load git">>$qsubfile
-echo "module load intel/2018.1.163">>$qsubfile
-echo "module load hdf5/1.8.16">>$qsubfile
-echo "module load openmpi/4.0.3">>$qsubfile
+echo "module load intel/2020.0.166">>$qsubfile
+echo "module load hdf5/1.14.1">>$qsubfile
+echo "module load openmpi/4.1.5">>$qsubfile
+
 echo -e "\n">>$qsubfile
 
 echo "cd /home/gkrahm/powderday/">>$qsubfile
